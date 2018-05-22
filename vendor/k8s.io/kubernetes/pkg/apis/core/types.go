@@ -3549,7 +3549,7 @@ const (
 	// The resource name for ResourceEphemeralStorage is alpha and it can change across releases.
 	ResourceEphemeralStorage ResourceName = "ephemeral-storage"
 	// NVIDIA GPU, in devices. Alpha, might change: although fractional and allowing values >1, only one whole device per node is assigned.
-	ResourceNvidiaGPU ResourceName = "alpha.kubernetes.io/nvidia-gpu"
+	ResourceNvidiaGPU ResourceName = "nvidia.com/gpu"
 )
 
 const (
