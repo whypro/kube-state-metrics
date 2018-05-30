@@ -37,6 +37,8 @@ func TestNodeCollector(t *testing.T) {
 	// Fixed metadata on type and help text. We prepend this to every expected
 	// output so we only have to modify a single place when doing adjustments.
 	const metadata = `
+		# HELP kube_node_cpu_overcommit_ratio CPU overcommit ratio
+		# TYPE kube_node_cpu_overcommit_ratio gauge
 		# HELP kube_node_created Unix creation timestamp
 		# TYPE kube_node_created gauge
 		# HELP kube_node_info Information about a cluster node.
@@ -79,6 +81,9 @@ func TestNodeCollector(t *testing.T) {
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "127.0.0.1",
+						Annotations: map[string]string{
+							CPUOvercommitRatioAnnotation: "2.5",
+						},
 					},
 					Status: v1.NodeStatus{
 						NodeInfo: v1.NodeSystemInfo{
@@ -95,6 +100,7 @@ func TestNodeCollector(t *testing.T) {
 				},
 			},
 			want: metadata + `
+				kube_node_cpu_overcommit_ratio{node="127.0.0.1"} 2.5
 				kube_node_info{container_runtime_version="rkt",kernel_version="kernel",kubelet_version="kubelet",kubeproxy_version="kubeproxy",node="127.0.0.1",os_image="osimage",provider_id="provider://i-uniqueid"} 1
 				kube_node_labels{node="127.0.0.1"} 1
 				kube_node_spec_unschedulable{node="127.0.0.1"} 0
@@ -139,6 +145,7 @@ func TestNodeCollector(t *testing.T) {
 				},
 			},
 			want: metadata + `
+				kube_node_cpu_overcommit_ratio{node="127.0.0.1"} 1
 				kube_node_created{node="127.0.0.1"} 1.5e+09
 				kube_node_info{container_runtime_version="rkt",kernel_version="kernel",kubelet_version="kubelet",kubeproxy_version="kubeproxy",node="127.0.0.1",os_image="osimage",provider_id="provider://i-randomidentifier"} 1
 				kube_node_labels{label_type="master",node="127.0.0.1"} 1

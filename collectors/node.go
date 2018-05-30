@@ -17,6 +17,8 @@ limitations under the License.
 package collectors
 
 import (
+	"strconv"
+
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
@@ -47,6 +49,12 @@ var (
 	descNodeCreated = prometheus.NewDesc(
 		"kube_node_created",
 		"Unix creation timestamp",
+		[]string{"node"}, nil,
+	)
+
+	descNodeCPUOvercommitRatio = prometheus.NewDesc(
+		"kube_node_cpu_overcommit_ratio",
+		"CPU overcommit ratio",
 		[]string{"node"}, nil,
 	)
 
@@ -161,6 +169,7 @@ type nodeCollector struct {
 func (nc *nodeCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- descNodeInfo
 	ch <- descNodeCreated
+	ch <- descNodeCPUOvercommitRatio
 	ch <- descNodeLabels
 	ch <- descNodeSpecUnschedulable
 	ch <- descNodeSpecTaint
@@ -203,6 +212,23 @@ func nodeLabelsDesc(labelKeys []string) *prometheus.Desc {
 	)
 }
 
+const (
+	CPUOvercommitRatioAnnotation = "k8s.qiniu.com/cpu-overcommit-ratio"
+)
+
+// getCPUOvercommitRatio returns CPU over-commmit ratio of node.
+func getCPUOvercommitRatio(node *v1.Node) float64 {
+	if ratio, ok := node.Annotations[CPUOvercommitRatioAnnotation]; ok {
+		ratio_f, err := strconv.ParseFloat(ratio, 64)
+		if err != nil {
+			glog.Errorf("failed to parse ratio data: %s", ratio)
+			return 1.0
+		}
+		return ratio_f
+	}
+	return 1.0
+}
+
 func (nc *nodeCollector) collectNode(ch chan<- prometheus.Metric, n v1.Node) {
 	addGauge := func(desc *prometheus.Desc, v float64, lv ...string) {
 		lv = append([]string{n.Name}, lv...)
@@ -221,6 +247,7 @@ func (nc *nodeCollector) collectNode(ch chan<- prometheus.Metric, n v1.Node) {
 	if !n.CreationTimestamp.IsZero() {
 		addGauge(descNodeCreated, float64(n.CreationTimestamp.Unix()))
 	}
+	addGauge(descNodeCPUOvercommitRatio, getCPUOvercommitRatio(&n))
 	labelKeys, labelValues := kubeLabelsToPrometheusLabels(n.Labels)
 	addGauge(nodeLabelsDesc(labelKeys), 1, labelValues...)
 
