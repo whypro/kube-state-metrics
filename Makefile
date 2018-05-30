@@ -1,7 +1,7 @@
 FLAGS =
 TESTENVVAR =
-REGISTRY = quay.io/coreos
-TAG = $(shell git describe --abbrev=0)
+REGISTRY ?= quay.io/coreos
+TAG ?= $(shell git describe --abbrev=0)
 PKGS = $(shell go list ./... | grep -v /vendor/)
 ARCH ?= $(shell go env GOARCH)
 BuildDate = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
